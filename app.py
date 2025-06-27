@@ -2,10 +2,13 @@ from flask import Flask, render_template, request
 from sympy import symbols, lambdify, sin, cos, tan, exp, log, sqrt, pi
 from decimal import Decimal, getcontext
 
+# Iniciar la app Flask
 app = Flask(__name__)
 
 # Configurar precisión decimal alta (20 dígitos)
 getcontext().prec = 20
+
+# Métodos de integración
 
 
 def trapecio(f, a, b, n):
@@ -42,11 +45,14 @@ def simpson_3_8(f, a, b, n):
     return (Decimal(3) * h * suma) / Decimal(8)
 
 
+# Mapeo de métodos
 metodos = {
     1: trapecio,
     2: simpson_1_3,
     3: simpson_3_8
 }
+
+# Rutas
 
 
 @app.route("/")
@@ -59,7 +65,6 @@ def resolver():
     datos_previos = request.form.to_dict()
     try:
         funcion_raw = datos_previos['funcion'].strip()
-        # Reemplazar ^ por ** para potencias estilo matemático
         funcion = funcion_raw.replace("^", "**")
 
         orden = datos_previos['orden']
@@ -79,7 +84,6 @@ def resolver():
         y_min = Decimal(datos_previos['ya'])
         y_max = Decimal(datos_previos['yb'])
 
-        # Validar n para métodos
         def validar_n(n, metodo):
             if metodo == 2 and n % 2 != 0:
                 raise ValueError(
@@ -122,14 +126,9 @@ def resolver():
             return metodos[metodo_ext](integrando_externo, y_min, y_max, n)
 
         resultado = integrar_dydx() if orden == "dydx" else integrar_dxdy()
-
         resultado_str = f"{resultado:.8f}"
 
         return render_template("index.html", resultado=resultado_str, datos_previos=datos_previos)
 
     except Exception as e:
         return render_template("index.html", error=str(e), datos_previos=datos_previos)
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
